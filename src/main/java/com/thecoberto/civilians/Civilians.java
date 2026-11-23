@@ -12,6 +12,13 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.fabricmc.fabric.api.event.player.UseBlockCallback;
+import net.fabricmc.fabric.api.event.player.UseItemCallback;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.TypedActionResult;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.Tameable;
@@ -41,6 +48,20 @@ public class Civilians implements ModInitializer {
 			return !pvpBlocked(victim, attacker);
 		});
 
+		// Lava and fire hurt without an attacker, so stop them being placed near protected players instead.
+		UseBlockCallback.EVENT.register((player, world, hand, hit) -> {
+			ItemStack stack = player.getStackInHand(hand);
+			if (world.isClient() || !(stack.isOf(Items.FLINT_AND_STEEL) || stack.isOf(Items.FIRE_CHARGE))) return ActionResult.PASS;
+			return nearProtected(player, hit.getPos()) ? ActionResult.FAIL : ActionResult.PASS;
+		});
+		UseItemCallback.EVENT.register((player, world, hand) -> {
+			ItemStack stack = player.getStackInHand(hand);
+			if (world.isClient() || !stack.isOf(Items.LAVA_BUCKET)) return TypedActionResult.pass(stack);
+			if (!nearProtected(player, player.getPos())) return TypedActionResult.pass(stack);
+			player.playerScreenHandler.syncState(); // so the client shows the lava bucket again
+			return TypedActionResult.fail(stack);
+		});
+
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> register(dispatcher));
 	}
 
@@ -60,6 +81,28 @@ public class Civilians implements ModInitializer {
 	private static boolean pvpBlocked(PlayerEntity victim, PlayerEntity attacker) {
 		for (String tag : List.of(CIVILIAN_TAG, ADVENTURE_ZONE_TAG)) {
 			if (hasTag(victim, tag) || hasTag(attacker, tag)) return true;
+		}
+		return false;
+	}
+	private static final double FIRE_RADIUS = 5;
+
+	private static boolean isProtected(PlayerEntity player) {
+		return hasTag(player, CIVILIAN_TAG) || hasTag(player, ADVENTURE_ZONE_TAG);
+	}
+
+	/**
+	 * True (and tells the player why) if lava or fire used at this spot could hurt
+	 * someone it shouldn't: a protected player nearby, or anyone nearby when the
+	 * user is protected.
+	 */
+	private static boolean nearProtected(PlayerEntity user, Vec3d pos) {
+		boolean userProtected = isProtected(user);
+		for (PlayerEntity other : user.getWorld().getPlayers()) {
+			if (other == user || other.isSpectator() || other.getPos().distanceTo(pos) > FIRE_RADIUS) continue;
+			if (userProtected || isProtected(other)) {
+				user.sendMessage(prefix().append("You can't use lava or fire this close to " + other.getName().getString() + "."), true);
+				return true;
+			}
 		}
 		return false;
 	}

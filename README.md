@@ -10,6 +10,8 @@ PvP between two players is blocked when:
 
 Arrows, tridents and tamed pets count as the player who fired or owns them. Only PvP is blocked: players still take damage from mobs, falling, lava and everything else.
 
+Lava, flint and steel and fire charges can't be used within 5 blocks of a civilian or someone in an adventure zone, and civilians can't use them within 5 blocks of other players, since lava and fire hurt without counting as a player's attack. Blocked hits don't knock back either.
+
 Requires Minecraft Java **1.21.1**, [Fabric Loader](https://fabricmc.net/use/) and [Fabric API](https://modrinth.com/mod/fabric-api). Server-side: it has to be installed on the server (or in single player). Players who join don't need it.
 
 ## Commands

@@ -3,7 +3,7 @@
 	"id": "coberto_teams",
 	"version": "${version}",
 	"name": "Teams",
-	"description": "Blocks player-vs-player damage between teammates, for civilians and inside adventure zones. Teams are set up in game with commands.",
+	"description": "Blocks player-vs-player damage for civilians and inside adventure zones. Use Java's built-in /team for teams.",
 	"authors": ["TheCoberto"],
 	"contact": { "sources": "https://github.com/TheCoberto/teams-minecraft-java" },
 	"license": "All-Rights-Reserved",

@@ -1,11 +1,10 @@
 # Teams
 **Minecraft Java Teams Mod (Fabric)**
 
-Java Edition port of [teams](https://github.com/TheCoberto/teams) (Broken Crown Factions Script) for Bedrock. Controls player-vs-player damage. Teams are set up in game; nothing is hard-coded.
+Java Edition port of [teams](https://github.com/TheCoberto/teams) (Broken Crown Factions Script) for Bedrock. Adds civilians and adventure zones, where players can't hurt each other. Teams themselves use Java's built-in `/team` command.
 
 PvP between two players is blocked when:
 
-- **They're on the same team.** Teammates can't hurt each other. Different teams can.
 - **Either one is a civilian** (has the `Civilian` tag). Civilians can't hurt players and players can't hurt them. Mobs, falls and so on still hurt them.
 - **Either one is in an adventure zone** (has the `inside_adventure_zone` tag). Give and remove that tag with command blocks around the zone.
 
@@ -15,21 +14,20 @@ Requires Minecraft Java **1.21.1**, [Fabric Loader](https://fabricmc.net/use/) a
 
 ## Commands
 
-Operators:
+- `/civilian <players> true|false` (operators) makes players civilians or not. `/tag <player> add Civilian` works too.
+- `/civilians` (anyone) lists the civilians online.
 
-- `/teamcreate <team>` creates a team. Names are 1-24 letters, numbers, `_` or `-`.
-- `/teamdelete <team>` deletes a team and takes everyone online off it.
-- `/teamjoin <players> <team>` puts players on a team, taking them off any other.
-- `/teamleave <players>` takes players off their team.
-- `/civilian <players> true|false` makes players civilians or not.
+## Teams
+Use Java's built-in `/team` command (operators):
 
-Anyone: `/teams` lists the teams and who's online on each.
-
-A player is on a team when they have a tag with the team's name, so `/tag <player> add <team>` and selectors like `@a[tag=<team>]` work too. Teams are saved in the world.
+- `/team add <team>` creates a team, and `/team remove <team>` deletes it.
+- `/team modify <team> friendlyFire false` stops teammates hurting each other. Set this on every team: it's on by default.
+- `/team join <team> <players>` and `/team leave <players>`.
+- `/team list <team>` lists a team's members. `/team modify <team> color <color>` colors their names.
 
 ## Differences from the Bedrock version
-- Commands have no `ev:` prefix: `/teamcreate` instead of `/ev:teamcreate`, and so on.
-- These teams are separate from Java's built-in `/team` scoreboard teams.
+- Commands have no `ev:` prefix: `/civilian` instead of `/ev:civilian`.
+- Teams use Java's `/team` instead of `/ev:teamcreate`, `/ev:teamjoin` and so on.
 
 ## Build
 ```

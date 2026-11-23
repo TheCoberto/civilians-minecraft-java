@@ -84,6 +84,7 @@ public class Civilians implements ModInitializer {
 		}
 		return false;
 	}
+
 	private static final double FIRE_RADIUS = 5;
 
 	private static boolean isProtected(PlayerEntity player) {

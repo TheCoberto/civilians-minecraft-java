@@ -1,0 +1,18 @@
+name: Civilians
+version: '${version}'
+main: com.thecoberto.civilians.CiviliansPlugin
+api-version: '1.21'
+description: Civilians and adventure zones, where players can't hurt each other. Use /team for teams.
+author: TheCoberto
+commands:
+  civilian:
+    description: Make players civilians (no PvP either way), or not
+    usage: /civilian <players> <true|false>
+    permission: civilians.admin
+  civilians:
+    description: List the civilians online
+    usage: /civilians
+permissions:
+  civilians.admin:
+    description: Make players civilians
+    default: op

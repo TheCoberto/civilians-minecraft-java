@@ -38,3 +38,6 @@ Use Java's built-in `/team` command (operators):
 Building needs JDK 25 or newer to run Gradle (the mod itself targets Java 21, which Gradle downloads automatically). The jar ends up in `build/libs/`. Put it in your `.minecraft/mods` folder along with Fabric API. `./gradlew runClient` starts a test game with the mod loaded.
 
 This mod used to be called Teams (`coberto_teams`). Remove the old Teams jar from your mods folder when you install it.
+
+## Paper server
+A Paper plugin version is in [paper-plugin](paper-plugin).

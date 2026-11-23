@@ -1,14 +1,14 @@
 {
 	"schemaVersion": 1,
-	"id": "coberto_teams",
+	"id": "coberto_civilians",
 	"version": "${version}",
-	"name": "Teams",
+	"name": "Civilians",
 	"description": "Blocks player-vs-player damage for civilians and inside adventure zones. Use Java's built-in /team for teams.",
 	"authors": ["TheCoberto"],
-	"contact": { "sources": "https://github.com/TheCoberto/teams-minecraft-java" },
+	"contact": { "sources": "https://github.com/TheCoberto/civilians-minecraft-java" },
 	"license": "All-Rights-Reserved",
 	"environment": "*",
-	"entrypoints": { "main": ["com.thecoberto.teams.Teams"] },
+	"entrypoints": { "main": ["com.thecoberto.civilians.Civilians"] },
 	"depends": {
 		"fabricloader": ">=0.16.0",
 		"minecraft": "~1.21.1",

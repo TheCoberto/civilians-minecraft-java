@@ -1,7 +1,7 @@
-# Teams
-**Minecraft Java Teams Mod (Fabric)**
+# Civilians
+**Minecraft Java Civilians Mod (Fabric)**
 
-Java Edition port of [teams](https://github.com/TheCoberto/teams) (Broken Crown Factions Script) for Bedrock. Adds civilians and adventure zones, where players can't hurt each other. Teams themselves use Java's built-in `/team` command.
+Java Edition port of the civilian and adventure zone parts of [teams](https://github.com/TheCoberto/teams) (Broken Crown Factions Script) for Bedrock. Adds civilians and adventure zones, where players can't hurt each other. Teams themselves use Java's built-in `/team` command.
 
 PvP between two players is blocked when:
 
@@ -34,3 +34,5 @@ Use Java's built-in `/team` command (operators):
 ./gradlew build
 ```
 Building needs JDK 25 or newer to run Gradle (the mod itself targets Java 21, which Gradle downloads automatically). The jar ends up in `build/libs/`. Put it in your `.minecraft/mods` folder along with Fabric API. `./gradlew runClient` starts a test game with the mod loaded.
+
+This mod used to be called Teams (`coberto_teams`). Remove the old Teams jar from your mods folder when you install it.

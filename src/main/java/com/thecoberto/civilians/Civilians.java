@@ -1,4 +1,4 @@
-package com.thecoberto.teams;
+package com.thecoberto.civilians;
 
 import java.util.Collection;
 import java.util.List;
@@ -28,7 +28,7 @@ import net.minecraft.util.Formatting;
  * Java port of the Bedrock Teams add-on. Teams themselves use Java's built-in
  * /team command (with friendlyFire false), so they aren't part of this mod.
  */
-public class Teams implements ModInitializer {
+public class Civilians implements ModInitializer {
 	static final String CIVILIAN_TAG = "Civilian";
 	static final String ADVENTURE_ZONE_TAG = "inside_adventure_zone";
 
@@ -75,10 +75,10 @@ public class Teams implements ModInitializer {
 				.requires(s -> s.hasPermissionLevel(2))
 				.then(CommandManager.argument("players", EntityArgumentType.players())
 						.then(CommandManager.argument("civilian", BoolArgumentType.bool())
-								.executes(Teams::civilian))));
+								.executes(Civilians::civilian))));
 
 		dispatcher.register(CommandManager.literal("civilians")
-				.executes(Teams::list));
+				.executes(Civilians::list));
 	}
 
 	private static int civilian(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
@@ -116,7 +116,7 @@ public class Teams implements ModInitializer {
 
 	private static MutableText prefix() {
 		// An unstyled root, so text appended after the prefix isn't gold too.
-		return Text.empty().append(Text.literal("Teams:").formatted(Formatting.GOLD)).append(" ");
+		return Text.empty().append(Text.literal("Civilians:").formatted(Formatting.GOLD)).append(" ");
 	}
 
 	private static String names(Collection<ServerPlayerEntity> players) {

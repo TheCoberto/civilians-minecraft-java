@@ -12,7 +12,7 @@ Arrows, tridents and tamed pets count as the player who fired or owns them. Only
 
 Lava, flint and steel and fire charges can't be used within 5 blocks of a civilian or someone in an adventure zone, and civilians can't use them within 5 blocks of other players, since lava and fire hurt without counting as a player's attack. Blocked hits don't knock back either.
 
-Requires Minecraft Java **1.21.1**, [Fabric Loader](https://fabricmc.net/use/) and [Fabric API](https://modrinth.com/mod/fabric-api). Server-side: it has to be installed on the server (or in single player). Players who join don't need it.
+Requires Minecraft Java **26.2**, [Fabric Loader](https://fabricmc.net/use/) and [Fabric API](https://modrinth.com/mod/fabric-api). Server-side: it has to be installed on the server (or in single player). Players who join don't need it.
 
 ## Commands
 
@@ -35,7 +35,7 @@ Use Java's built-in `/team` command (operators):
 ```
 ./gradlew build
 ```
-Building needs JDK 25 or newer to run Gradle (the mod itself targets Java 21, which Gradle downloads automatically). The jar ends up in `build/libs/`. Put it in your `.minecraft/mods` folder along with Fabric API. `./gradlew runClient` starts a test game with the mod loaded.
+Building needs JDK 25 or newer to run Gradle (the mod targets Java 25 too). The jar ends up in `build/libs/`. Put it in your `.minecraft/mods` folder along with Fabric API. `./gradlew runClient` starts a test game with the mod loaded.
 
 This mod used to be called Teams (`coberto_teams`). Remove the old Teams jar from your mods folder when you install it.
 

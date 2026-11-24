@@ -14,21 +14,21 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.TypedActionResult;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.command.argument.EntityArgumentType;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.Tameable;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.server.command.CommandManager;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.OwnableEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 
 /**
  * Stops player-vs-player damage for civilians and inside adventure zones.
@@ -42,24 +42,24 @@ public class Civilians implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
-			if (!(entity instanceof ServerPlayerEntity victim)) return true;
-			PlayerEntity attacker = responsiblePlayer(source.getAttacker());
+			if (!(entity instanceof ServerPlayer victim)) return true;
+			Player attacker = responsiblePlayer(source.getEntity());
 			if (attacker == null || attacker == victim) return true; // hurting yourself is fine
 			return !pvpBlocked(victim, attacker);
 		});
 
 		// Lava and fire hurt without an attacker, so stop them being placed near protected players instead.
 		UseBlockCallback.EVENT.register((player, world, hand, hit) -> {
-			ItemStack stack = player.getStackInHand(hand);
-			if (world.isClient() || !(stack.isOf(Items.FLINT_AND_STEEL) || stack.isOf(Items.FIRE_CHARGE))) return ActionResult.PASS;
-			return nearProtected(player, hit.getPos()) ? ActionResult.FAIL : ActionResult.PASS;
+			ItemStack stack = player.getItemInHand(hand);
+			if (world.isClientSide() || !(stack.is(Items.FLINT_AND_STEEL) || stack.is(Items.FIRE_CHARGE))) return InteractionResult.PASS;
+			return nearProtected(player, hit.getLocation()) ? InteractionResult.FAIL : InteractionResult.PASS;
 		});
 		UseItemCallback.EVENT.register((player, world, hand) -> {
-			ItemStack stack = player.getStackInHand(hand);
-			if (world.isClient() || !stack.isOf(Items.LAVA_BUCKET)) return TypedActionResult.pass(stack);
-			if (!nearProtected(player, player.getPos())) return TypedActionResult.pass(stack);
-			player.playerScreenHandler.syncState(); // so the client shows the lava bucket again
-			return TypedActionResult.fail(stack);
+			ItemStack stack = player.getItemInHand(hand);
+			if (world.isClientSide() || !stack.is(Items.LAVA_BUCKET)) return InteractionResult.PASS;
+			if (!nearProtected(player, player.position())) return InteractionResult.PASS;
+			player.inventoryMenu.sendAllDataToRemote(); // so the client shows the lava bucket again
+			return InteractionResult.FAIL;
 		});
 
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> register(dispatcher));
@@ -72,13 +72,13 @@ public class Civilians implements ModInitializer {
 	 * tamed pet that did it. Arrows and tridents already report their shooter
 	 * as the attacker.
 	 */
-	private static PlayerEntity responsiblePlayer(Entity entity) {
-		if (entity instanceof PlayerEntity player) return player;
-		if (entity instanceof Tameable pet && pet.getOwner() instanceof PlayerEntity owner) return owner;
+	private static Player responsiblePlayer(Entity entity) {
+		if (entity instanceof Player player) return player;
+		if (entity instanceof OwnableEntity pet && pet.getOwner() instanceof Player owner) return owner;
 		return null;
 	}
 
-	private static boolean pvpBlocked(PlayerEntity victim, PlayerEntity attacker) {
+	private static boolean pvpBlocked(Player victim, Player attacker) {
 		for (String tag : List.of(CIVILIAN_TAG, ADVENTURE_ZONE_TAG)) {
 			if (hasTag(victim, tag) || hasTag(attacker, tag)) return true;
 		}
@@ -87,7 +87,7 @@ public class Civilians implements ModInitializer {
 
 	private static final double FIRE_RADIUS = 5;
 
-	private static boolean isProtected(PlayerEntity player) {
+	private static boolean isProtected(Player player) {
 		return hasTag(player, CIVILIAN_TAG) || hasTag(player, ADVENTURE_ZONE_TAG);
 	}
 
@@ -96,12 +96,12 @@ public class Civilians implements ModInitializer {
 	 * someone it shouldn't: a protected player nearby, or anyone nearby when the
 	 * user is protected.
 	 */
-	private static boolean nearProtected(PlayerEntity user, Vec3d pos) {
+	private static boolean nearProtected(Player user, Vec3 pos) {
 		boolean userProtected = isProtected(user);
-		for (PlayerEntity other : user.getWorld().getPlayers()) {
-			if (other == user || other.isSpectator() || other.getPos().distanceTo(pos) > FIRE_RADIUS) continue;
+		for (Player other : ((ServerLevel) user.level()).players()) {
+			if (other == user || other.isSpectator() || other.position().distanceTo(pos) > FIRE_RADIUS) continue;
 			if (userProtected || isProtected(other)) {
-				user.sendMessage(prefix().append("You can't use lava or fire this close to " + other.getName().getString() + "."), true);
+				user.sendOverlayMessage(prefix().append("You can't use lava or fire this close to " + other.getName().getString() + "."));
 				return true;
 			}
 		}
@@ -109,61 +109,61 @@ public class Civilians implements ModInitializer {
 	}
 
 	private static boolean hasTag(Entity entity, String tag) {
-		return entity.getCommandTags().contains(tag);
+		return entity.entityTags().contains(tag);
 	}
 
 	// ---------- Commands ----------
 
-	private static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
-		dispatcher.register(CommandManager.literal("civilian")
-				.requires(s -> s.hasPermissionLevel(2))
-				.then(CommandManager.argument("players", EntityArgumentType.players())
-						.then(CommandManager.argument("civilian", BoolArgumentType.bool())
+	private static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+		dispatcher.register(Commands.literal("civilian")
+				.requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+				.then(Commands.argument("players", EntityArgument.players())
+						.then(Commands.argument("civilian", BoolArgumentType.bool())
 								.executes(Civilians::civilian))));
 
-		dispatcher.register(CommandManager.literal("civilians")
+		dispatcher.register(Commands.literal("civilians")
 				.executes(Civilians::list));
 	}
 
-	private static int civilian(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
-		ServerCommandSource source = context.getSource();
-		Collection<ServerPlayerEntity> players = EntityArgumentType.getPlayers(context, "players");
+	private static int civilian(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+		CommandSourceStack source = context.getSource();
+		Collection<ServerPlayer> players = EntityArgument.getPlayers(context, "players");
 		boolean civilian = BoolArgumentType.getBool(context, "civilian");
-		for (ServerPlayerEntity player : players) {
+		for (ServerPlayer player : players) {
 			if (civilian) {
-				player.addCommandTag(CIVILIAN_TAG);
-				player.sendMessage(prefix().append("You're now a ")
-						.append(Text.literal("civilian").formatted(Formatting.GREEN))
+				player.addTag(CIVILIAN_TAG);
+				player.sendSystemMessage(prefix().append("You're now a ")
+						.append(Component.literal("civilian").withStyle(ChatFormatting.GREEN))
 						.append(": players can't hurt you and you can't hurt them."));
 			} else {
-				player.removeCommandTag(CIVILIAN_TAG);
-				player.sendMessage(prefix().append("You're no longer a civilian. PvP applies to you again."));
+				player.removeTag(CIVILIAN_TAG);
+				player.sendSystemMessage(prefix().append("You're no longer a civilian. PvP applies to you again."));
 			}
 		}
 		String result = names(players) + (civilian ? " are now civilians." : " are no longer civilians.");
-		source.sendFeedback(() -> Text.literal(result), true);
+		source.sendSuccess(() -> Component.literal(result), true);
 		return players.size();
 	}
 
-	private static int list(CommandContext<ServerCommandSource> context) {
-		ServerCommandSource source = context.getSource();
-		List<ServerPlayerEntity> civilians = source.getServer().getPlayerManager().getPlayerList().stream()
+	private static int list(CommandContext<CommandSourceStack> context) {
+		CommandSourceStack source = context.getSource();
+		List<ServerPlayer> civilians = source.getServer().getPlayerList().getPlayers().stream()
 				.filter(p -> hasTag(p, CIVILIAN_TAG)).toList();
-		MutableText message = civilians.isEmpty()
+		MutableComponent message = civilians.isEmpty()
 				? prefix().append("No civilians online.")
-				: prefix().append(Text.literal("Civilians").formatted(Formatting.GREEN)).append(": " + names(civilians));
-		source.sendFeedback(() -> message, false);
+				: prefix().append(Component.literal("Civilians").withStyle(ChatFormatting.GREEN)).append(": " + names(civilians));
+		source.sendSuccess(() -> message, false);
 		return civilians.size();
 	}
 
 	// ---------- Messages ----------
 
-	private static MutableText prefix() {
+	private static MutableComponent prefix() {
 		// An unstyled root, so text appended after the prefix isn't gold too.
-		return Text.empty().append(Text.literal("Civilians:").formatted(Formatting.GOLD)).append(" ");
+		return Component.empty().append(Component.literal("Civilians:").withStyle(ChatFormatting.GOLD)).append(" ");
 	}
 
-	private static String names(Collection<ServerPlayerEntity> players) {
+	private static String names(Collection<ServerPlayer> players) {
 		return players.stream().map(p -> p.getName().getString()).collect(Collectors.joining(", "));
 	}
 }

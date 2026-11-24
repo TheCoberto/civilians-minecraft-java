@@ -7,9 +7,8 @@ author: TheCoberto
 softdepend: [PlaceholderAPI]
 commands:
   civilian:
-    description: Make players civilians (no PvP either way), or not
-    usage: /civilian <players> <true|false>
-    permission: civilians.admin
+    description: Become a civilian (no PvP either way) or stop being one. Admins can set it for others.
+    usage: /civilian [join|leave] or /civilian <players> <true|false>
   civilians:
     description: List the civilians online
     usage: /civilians
@@ -17,3 +16,6 @@ permissions:
   civilians.admin:
     description: Make players civilians
     default: op
+  civilians.self:
+    description: Become a civilian or stop being one with /civilian join|leave
+    default: true

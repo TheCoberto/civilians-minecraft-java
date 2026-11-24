@@ -1,0 +1,6 @@
+# Players can't change for this long after hitting or being hit by another player,
+# so nobody turns civilian to escape a fight.
+combat-seconds: 30
+
+# How long players wait between changes with /civilian join|leave (admins skip it).
+cooldown-minutes: 30

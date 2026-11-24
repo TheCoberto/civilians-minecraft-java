@@ -4,3 +4,8 @@ combat-seconds: 30
 
 # How long players wait between changes with /civilian join|leave (admins skip it).
 cooldown-minutes: 30
+
+# Show the Peaceful or Fighter menu to players the first time they join.
+# They can open it again any time with /civilian menu.
+first-join-menu: true
+first-join-menu-delay-seconds: 5

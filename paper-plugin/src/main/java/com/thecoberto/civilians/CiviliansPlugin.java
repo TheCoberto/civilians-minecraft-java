@@ -48,6 +48,7 @@ public final class CiviliansPlugin extends JavaPlugin implements Listener {
 	/** Player -> when they last hit or were hit by another player (ms). */
 	private final Map<UUID, Long> lastPvp = new HashMap<>();
 	private NamespacedKey lastChangeKey;
+	private CivilianMenu menu;
 
 	@Override
 	public void onEnable() {
@@ -56,6 +57,7 @@ public final class CiviliansPlugin extends JavaPlugin implements Listener {
 		getServer().getPluginManager().registerEvents(this, this);
 		// Lets TAB show [Civilian] above heads and in the tab list.
 		if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) new CivilianPlaceholders(this).register();
+		menu = new CivilianMenu(this);
 	}
 
 	// ---------- Blocking PvP ----------
@@ -159,6 +161,10 @@ public final class CiviliansPlugin extends JavaPlugin implements Listener {
 			switch (choice) {
 				case "join", "on" -> choose(self, true);
 				case "leave", "off" -> choose(self, false);
+				case "menu" -> {
+					if (self.hasPermission("civilians.self")) menu.open(self);
+					else self.sendMessage(Component.text("You can't change that yourself.", NamedTextColor.RED));
+				}
 				case "status" -> self.sendMessage(prefix().append(Component.text(isCivilian(self)
 						? "You're a civilian. Leave with /civilian leave."
 						: "You're not a civilian. Join with /civilian join.")));
@@ -203,19 +209,22 @@ public final class CiviliansPlugin extends JavaPlugin implements Listener {
 		return true;
 	}
 
-	private static boolean isCivilian(Player p) {
+	static boolean isCivilian(Player p) {
 		return p.getScoreboardTags().contains(CIVILIAN_TAG);
 	}
 
-	/** A player making themselves a civilian or not, unless they were just fighting or changed recently. */
-	private void choose(Player player, boolean civilian) {
+	/**
+	 * A player making themselves a civilian or not, unless they were just fighting or changed recently.
+	 * Returns whether it changed.
+	 */
+	boolean choose(Player player, boolean civilian) {
 		if (isCivilian(player) == civilian) {
 			player.sendMessage(prefix().append(Component.text(civilian ? "You're already a civilian." : "You're not a civilian.")));
-			return;
+			return false;
 		}
 		if (!player.hasPermission("civilians.self")) {
 			player.sendMessage(Component.text("You can't change that yourself.", NamedTextColor.RED));
-			return;
+			return false;
 		}
 		long now = System.currentTimeMillis();
 		long combatMs = getConfig().getLong("combat-seconds", 30) * 1000;
@@ -223,14 +232,14 @@ public final class CiviliansPlugin extends JavaPlugin implements Listener {
 		if (now - fought < combatMs) {
 			player.sendMessage(Component.text("You were just in a fight. Try again in "
 					+ duration(combatMs - (now - fought)) + ".", NamedTextColor.RED));
-			return;
+			return false;
 		}
 		long cooldownMs = getConfig().getLong("cooldown-minutes", 30) * 60_000;
 		Long changed = player.getPersistentDataContainer().get(lastChangeKey, PersistentDataType.LONG);
 		if (changed != null && now - changed < cooldownMs && !player.hasPermission("civilians.admin")) {
 			player.sendMessage(Component.text("You changed this recently. Try again in "
 					+ duration(cooldownMs - (now - changed)) + ".", NamedTextColor.RED));
-			return;
+			return false;
 		}
 		player.getPersistentDataContainer().set(lastChangeKey, PersistentDataType.LONG, now);
 		if (civilian) {
@@ -242,6 +251,7 @@ public final class CiviliansPlugin extends JavaPlugin implements Listener {
 			player.removeScoreboardTag(CIVILIAN_TAG);
 			player.sendMessage(prefix().append(Component.text("You're no longer a civilian. PvP applies to you again.")));
 		}
+		return true;
 	}
 
 	private static String duration(long ms) {
@@ -254,7 +264,7 @@ public final class CiviliansPlugin extends JavaPlugin implements Listener {
 		if (!command.getName().equals("civilian")) return List.of();
 		List<String> options = new ArrayList<>();
 		if (args.length == 1) {
-			options.addAll(List.of("join", "leave"));
+			options.addAll(List.of("join", "leave", "menu"));
 			if (sender.hasPermission("civilians.admin")) {
 				options.addAll(List.of("@a", "@p", "@s"));
 				Bukkit.getOnlinePlayers().forEach(p -> options.add(p.getName()));

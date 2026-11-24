@@ -8,7 +8,7 @@ softdepend: [PlaceholderAPI]
 commands:
   civilian:
     description: Become a civilian (no PvP either way) or stop being one. Admins can set it for others.
-    usage: /civilian [join|leave] or /civilian <players> <true|false>
+    usage: /civilian [join|leave|menu] or /civilian <players> <true|false>
   civilians:
     description: List the civilians online
     usage: /civilians

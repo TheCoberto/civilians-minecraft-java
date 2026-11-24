@@ -43,6 +43,8 @@ public final class CiviliansPlugin extends JavaPlugin implements Listener {
 	@Override
 	public void onEnable() {
 		getServer().getPluginManager().registerEvents(this, this);
+		// Lets TAB show [Civilian] above heads and in the tab list.
+		if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) new CivilianPlaceholders(this).register();
 	}
 
 	// ---------- Blocking PvP ----------

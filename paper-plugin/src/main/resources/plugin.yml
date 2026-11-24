@@ -4,6 +4,7 @@ main: com.thecoberto.civilians.CiviliansPlugin
 api-version: '1.21'
 description: Civilians and adventure zones, where players can't hurt each other. Use /team for teams.
 author: TheCoberto
+softdepend: [PlaceholderAPI]
 commands:
   civilian:
     description: Make players civilians (no PvP either way), or not
